@@ -4,11 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase/client';
 import { onAuthStateChanged } from 'firebase/auth';
-import {
-  doc,
-  getDoc,
-  collection,
-} from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { Plus, LogOut, UserCog } from 'lucide-react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
@@ -40,7 +36,7 @@ async function fetchBinancePrices(symbols: string[]): Promise<Record<string, num
     const res = await fetch('https://api.binance.com/api/v3/ticker/price');
     const data = await res.json();
     symbols.forEach((symbol) => {
-      const pair = data.find((d: any) => d.symbol === `${symbol}USDT`);
+      const pair = data.find((d: { symbol: string; price: string }) => d.symbol === `${symbol}USDT`);
       if (pair) result[symbol] = parseFloat(pair.price);
     });
   } catch (e) {
@@ -54,7 +50,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [tokens, setTokens] = useState<TokenData[]>([]);
-  const [exchangeRate, setExchangeRate] = useState(0.78); // USD to GBP mock
+  const [exchangeRate] = useState(0.78); // USD to GBP mock
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -116,7 +112,14 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white">
-        <Image src="/logo.png" alt="Grooby Logo" width={120} height={120} priority className="animate-pulse drop-shadow-[0_0_18px_rgba(255,255,255,0.4)] mb-4" />
+        <Image
+          src="/logo.png"
+          alt="Grooby Logo"
+          width={120}
+          height={120}
+          priority
+          className="animate-pulse drop-shadow-[0_0_18px_rgba(255,255,255,0.4)] mb-4"
+        />
         <p className="text-lg font-bold animate-pulse text-white/80">Loading...</p>
       </div>
     );
@@ -124,16 +127,38 @@ export default function Dashboard() {
 
   return (
     <div className="relative min-h-screen bg-gray-900 text-white px-4 py-4">
-      <Image src="/bg.png" alt="Background" fill className="object-cover opacity-30 absolute z-0" priority />
+      <Image
+        src="/bg.png"
+        alt="Background"
+        fill
+        className="object-cover opacity-30 absolute z-0"
+        priority
+      />
       <div className="relative z-10">
         <header className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
-            <Image src="/logo.png" alt="Grooby" width={40} height={40} className="drop-shadow-[0_0_12px_rgba(255,255,255,0.3)]" priority />
+            <Image
+              src="/logo.png"
+              alt="Grooby"
+              width={40}
+              height={40}
+              className="drop-shadow-[0_0_12px_rgba(255,255,255,0.3)]"
+              priority
+            />
             <span className="font-semibold text-lg">Olá, {userData?.name || 'Usuário'}</span>
           </div>
           <div className="flex items-center gap-4">
-            <UserCog className="w-6 h-6 text-white/70 cursor-pointer" onClick={() => router.push('/dash/settings')} />
-            <LogOut className="w-6 h-6 text-white/70 cursor-pointer" onClick={async () => { await auth.signOut(); router.push('/auth'); }} />
+            <UserCog
+              className="w-6 h-6 text-white/70 cursor-pointer"
+              onClick={() => router.push('/dash/settings')}
+            />
+            <LogOut
+              className="w-6 h-6 text-white/70 cursor-pointer"
+              onClick={async () => {
+                await auth.signOut();
+                router.push('/auth');
+              }}
+            />
           </div>
         </header>
 
@@ -148,7 +173,11 @@ export default function Dashboard() {
           </div>
           <div className="bg-white/10 backdrop-blur-lg p-4 rounded-xl shadow">
             <p className="text-sm text-white/70">Lucro / Prejuízo</p>
-            <h2 className={`text-xl font-semibold ${profit >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+            <h2
+              className={`text-xl font-semibold ${
+                profit >= 0 ? 'text-green-300' : 'text-red-300'
+              }`}
+            >
               {profit >= 0 ? '+' : ''}£{profit.toFixed(2)} ({profitPercent.toFixed(1)}%)
             </h2>
           </div>
@@ -159,7 +188,10 @@ export default function Dashboard() {
           <div className="space-y-3">
             {tokens.map((token, index) => {
               const totalAmount = token.entries.reduce((sum, entry) => sum + entry.amount, 0);
-              const investedUSD = token.entries.reduce((sum, entry) => sum + entry.amount * entry.price_usd, 0);
+              const investedUSD = token.entries.reduce(
+                (sum, entry) => sum + entry.amount * entry.price_usd,
+                0
+              );
               const priceUSD = token.price_usd || 0;
               const currentValueUSD = totalAmount * priceUSD;
               const currentValueGBP = currentValueUSD * exchangeRate;
@@ -177,15 +209,31 @@ export default function Dashboard() {
                   onClick={() => router.push(`/dash/token/${token.symbol.toUpperCase()}`)}
                 >
                   <div className="flex justify-between items-center mb-1">
-                    <p className="text-lg font-bold">{token.name} <span className="text-white/60 text-sm font-normal">({token.symbol})</span></p>
-                    <span className={`font-bold text-sm ${profitGBP >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {profitGBP >= 0 ? '+' : ''}£{profitGBP.toFixed(2)} ({profitPercent.toFixed(1)}%)
+                    <p className="text-lg font-bold">
+                      {token.name}{' '}
+                      <span className="text-white/60 text-sm font-normal">
+                        ({token.symbol})
+                      </span>
+                    </p>
+                    <span
+                      className={`font-bold text-sm ${
+                        profitGBP >= 0 ? 'text-green-400' : 'text-red-400'
+                      }`}
+                    >
+                      {profitGBP >= 0 ? '+' : ''}£{profitGBP.toFixed(2)} (
+                      {profitPercent.toFixed(1)}%)
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm text-white/80">
-                    <span>Qtd: <span className="font-bold text-white">{totalAmount}</span></span>
-                    <span className="text-base">💲 <span className="font-bold text-white text-lg">${priceUSD.toFixed(2)}</span></span>
-                    <span>Atual £: <span className="font-bold text-white">£{currentValueGBP.toFixed(2)}</span></span>
+                    <span>
+                      Qtd: <span className="font-bold text-white">{totalAmount}</span>
+                    </span>
+                    <span className="text-base">
+                      💲 <span className="font-bold text-white text-lg">${priceUSD.toFixed(2)}</span>
+                    </span>
+                    <span>
+                      Atual £: <span className="font-bold text-white">£{currentValueGBP.toFixed(2)}</span>
+                    </span>
                   </div>
                 </motion.div>
               );

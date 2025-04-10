@@ -12,7 +12,6 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
 
 export default function AuthPage() {
   const router = useRouter();
@@ -94,8 +93,12 @@ export default function AuthPage() {
           });
           setSuccess('');
         }, 1500);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('An unknown error occurred.');
+        }
       }
     } else {
       try {
@@ -108,7 +111,7 @@ export default function AuthPage() {
         setTimeout(() => {
           router.push('/dash');
         }, 2000);
-      } catch (err: any) {
+      } catch (err: unknown) {
         setError('Invalid email or password.');
       }
     }
@@ -116,25 +119,19 @@ export default function AuthPage() {
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center px-4 py-10 bg-gray-900">
-      {/* Fundo com opacidade */}
       <Image
         src="/bg.png"
         alt="Background"
         fill
         className="object-cover opacity-30 absolute z-0"
       />
-
       <div className="relative z-10 w-full max-w-md bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-xl shadow-xl p-6 sm:p-8">
         <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-center">
           {isRegister ? 'Create your Grooby Account' : 'Login to Grooby'}
         </h1>
 
-        {error && (
-          <div className="mb-4 text-red-400 text-sm text-center">{error}</div>
-        )}
-        {success && (
-          <div className="mb-4 text-green-400 text-sm text-center">{success}</div>
-        )}
+        {error && <div className="mb-4 text-red-400 text-sm text-center">{error}</div>}
+        {success && <div className="mb-4 text-green-400 text-sm text-center">{success}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {isRegister && (
@@ -200,7 +197,6 @@ export default function AuthPage() {
                 onChange={handleChange}
                 className="w-full rounded-lg px-4 py-3 bg-white/20 placeholder-white/60"
               />
-
               <label className="flex items-center text-sm">
                 <input
                   type="checkbox"
