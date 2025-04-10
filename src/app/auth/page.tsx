@@ -111,7 +111,7 @@ export default function AuthPage() {
         setTimeout(() => {
           router.push('/dash');
         }, 2000);
-      } catch (err: unknown) {
+      } catch {
         setError('Invalid email or password.');
       }
     }
